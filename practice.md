@@ -608,3 +608,88 @@ Alternatively, run the following command:
 Add the secret volume and mount path to create a pod called secret-1401 in the admin1401 namespace as follows:
 
 ![img_11.png](img_11.png)
+
+---
+Control plane failures
+--------------
+**Question 1:**
+The cluster is broken. We tried deploying an application but it's not working. Troubleshoot and fix the issue
+
+**Solution:**
+![img_12.png](img_12.png)
+
+**Question 2:**
+Scale the deployment app to 2 pods.
+
+**Solution: Run the command: kubectl scale deploy app --replicas=2**
+
+**Question 3:
+Even though the deployment was scaled to 2, the number of PODs does not seem to increase. Investigate and fix the issue.
+Inspect the component responsible for managing deployments and replicasets.**
+
+**Solution:**
+Run the command: kubectl get po -n kube-system and check the logs of kube-controller-manager pod to know the failure reason by running command: kubectl logs -n kube-system kube-controller-manager-controlplane
+
+Then check the kube-controller-manager configuration file at /etc/kubernetes/manifests/kube-controller-manager.yaml and fix the issue.
+
+**root@controlplane:/etc/kubernetes/manifests# kubectl -n kube-system logs kube-controller-manager-controlplane
+I0916 13:10:47.059336       1 serving.go:348] Generated self-signed cert in-memory
+stat /etc/kubernetes/controller-manager-XXXX.conf: no such file or directory
+
+root@controlplane:/etc/kubernetes/manifests#
+The configuration file specified (/etc/kubernetes/controller-manager-XXXX.conf) does not exist.
+Correct the path: /etc/kubernetes/controller-manager.conf**
+
+**Question 4:**
+**Something is wrong with scaling again. We just tried scaling the deployment to 3 replicas. But it's not happening.**
+
+**Solution:**
+Check the volume mount path in kube-controller-manager manifest file at /etc/kubernetes/manifests.
+Just as we did in the previous question, inspect the logs of the kube-controller-manager pod:
+
+**root@controlplane:/etc/kubernetes/manifests# kubectl -n kube-system logs kube-controller-manager-controlplane**
+I0916 13:17:27.452539       1 serving.go:348] Generated self-signed cert in-memory
+unable to load client CA provider: open /etc/kubernetes/pki/ca.crt: no such file or directory
+
+**root@controlplane:/etc/kubernetes/manifests#**
+It appears the path /etc/kubernetes/pki is not mounted from the controlplane to the kube-controller-manager pod. If we inspect the pod manifest file, we can see that the incorrect hostPath is used for the volume:
+
+WRONG:
+
+- hostPath:
+  path: /etc/kubernetes/WRONG-PKI-DIRECTORY
+  type: DirectoryOrCreate
+  CORRECT:
+
+- hostPath:
+  path: /etc/kubernetes/pki
+  type: DirectoryOrCreate
+  Once the path is corrected, the pod will be recreated and our deployment should eventually scale up to 3 replicas.
+
+---
+Test worker nodes failure
+--------------
+**Question 1:**
+Fix the broken cluster
+
+Solution 1:
+![img_13.png](img_13.png)
+![img_14.png](img_14.png)
+![img_15.png](img_15.png)
+![img_16.png](img_16.png)
+![img_17.png](img_17.png)
+![img_18.png](img_18.png)
+
+**Question 2:**
+The cluster is broken again. Investigate and fix the issue.
+
+**Solution:**
+![img_19.png](img_19.png)
+
+**Question 3:**
+The cluster is broken again. Investigate and fix the issue.
+
+**Solution:**
+![img_20.png](img_20.png)
+![img_21.png](img_21.png)
+
