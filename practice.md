@@ -243,8 +243,9 @@ Role Name: developer, namespace: development, Resource: Pods
 Access: User 'john' has appropriate permissions**
 
 **Solution:**
-![img_4.png](img_4.png)
 **kubectl create role developer --resource=pods --verb=create,list,get,update,delete --namespace=development**
+![img_4.png](img_4.png)
+
 **kubectl create rolebinding developer-role-binding --role=developer --user=john --namespace=development**
 To verify the permission from kubectl utility tool:
 **kubectl auth can-i update pods --as=john --names**
@@ -290,7 +291,7 @@ To know the IP Address of the node01 node:
 
 **root@controlplane:~# kubectl get nodes -o wide**
 
-# Perform SSH
+**Perform SSH**
 **root@controlplane:~# ssh node01
 OR
 root@controlplane:~# ssh <IP of node01>
@@ -310,3 +311,300 @@ Go back to the controlplane node and check the status of static pod:
 **root@node01:~# exit
 logout
 root@controlplane:~# kubectl get pods** 
+
+---
+Mock Exam - 3
+--------------
+
+**Question 1:**
+Create a new service account with the name pvviewer. Grant this Service account access to list all PersistentVolumes in the cluster by creating an appropriate cluster role called pvviewer-role and ClusterRoleBinding called pvviewer-role-binding.
+Next, create a pod called pvviewer with the image: redis and serviceAccount: pvviewer in the default namespace.
+
+ServiceAccount: pvviewer
+ClusterRole: pvviewer-role
+ClusterRoleBinding: pvviewer-role-binding
+Pod: pvviewer
+Pod configured to use ServiceAccount pvviewer ?
+
+**Solution:**
+Pods authenticate to the API Server using ServiceAccounts. If the serviceAccount name is not specified, the default service account for the namespace is used during a pod creation.
+
+Reference: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+
+Now, create a service account pvviewer:
+
+kubectl create serviceaccount pvviewer
+To create a clusterrole:
+
+kubectl create clusterrole pvviewer-role --resource=persistentvolumes --verb=list
+To create a clusterrolebinding:
+
+kubectl create clusterrolebinding pvviewer-role-binding --clusterrole=pvviewer-role --serviceaccount=default:pvviewer
+Solution manifest file to create a new pod called pvviewer as follows:
+
+![img_5.png](img_5.png)
+
+**Question 2:**
+**List the InternalIP of all nodes of the cluster. Save the result to a file /root/CKA/node_ips.
+Answer should be in the format: InternalIP of controlplane<space>InternalIP of node01 (in a single line)**
+
+**Solution:**
+Explore the jsonpath loop.
+**kubectl get nodes -o jsonpath='{.items[*].status.addresses[?(@.type=="InternalIP")].address}' > /root/CKA/node_ips**
+
+**Question 3:**
+Create a pod called multi-pod with two containers.
+Container 1, name: alpha, image: nginx
+Container 2: name: beta, image: busybox, command: sleep 4800
+
+Environment Variables:
+container 1:
+name: alpha
+
+Container 2:
+name: beta
+
+Pod Name: multi-pod
+Container 1: alpha
+Container 2: beta
+Container beta commands set correctly?
+Container 1 Environment Value Set
+Container 2 Environment Value Set
+
+**Solution:**
+Solution manifest file to create a multi-container pod multi-pod as follows:
+
+![img_6.png](img_6.png)
+
+**Question 4:**
+Create a Pod called non-root-pod , image: redis:alpine
+runAsUser: 1000
+fsGroup: 2000
+
+**Solution:**
+Solution manifest file to create a pod called non-root-pod as follows:
+![img_7.png](img_7.png)
+
+**Question 5:**
+We have deployed a new pod called np-test-1 and a service called np-test-service. Incoming connections to this service are not working. Troubleshoot and fix it.
+Create NetworkPolicy, by the name ingress-to-nptest that allows incoming connections to the service over port 80.
+
+Important: Don't delete any current objects deployed.
+
+**Solution:**
+Solution manifest file to create a network policy ingress-to-nptest as follows:
+
+![img_8.png](img_8.png)
+
+**Question 6:**
+Taint the worker node node01 to be Unschedulable. Once done, create a pod called dev-redis, image redis:alpine, to ensure workloads are not scheduled to this worker node. Finally, create a new pod called prod-redis and image: redis:alpine with toleration to be scheduled on node01.
+
+key: env_type, value: production, operator: Equal and effect: NoSchedule
+Key = env_type
+Value = production
+Effect = NoSchedule
+pod 'dev-redis' (no tolerations) is not scheduled on node01?
+Create a pod 'prod-redis' to run on node01
+
+**Solution:**
+To add taints on the node01 worker node:
+
+**kubectl taint node node01 env_type=production:NoSchedule**
+Now, deploy dev-redis pod and to ensure that workloads are not scheduled to this node01 worker node.
+
+**kubectl run dev-redis --image=redis:alpine**
+To view the node name of recently deployed pod:
+
+**kubectl get pods -o wide**
+Solution manifest file to deploy new pod called prod-redis with toleration to be scheduled on node01 worker node.
+
+![img_9.png](img_9.png)
+**Question 7:**
+Create a pod called hr-pod in hr namespace belonging to the production environment and frontend tier .
+image: redis:alpine
+
+Use appropriate labels and create all the required objects if it does not exist in the system already.
+hr-pod labeled with environment production?
+hr-pod labeled with tier frontend?
+
+Solution :
+Create a namespace if it doesn't exist:
+
+**kubectl create namespace hr**
+and then create a hr-pod with given details:
+
+**kubectl run hr-pod --image=redis:alpine --namespace=hr --la**
+
+**Question 8:**
+A kubeconfig file called super.kubeconfig has been created under /root/CKA. There is something wrong with the configuration. Troubleshoot and fix it.
+
+Fix /root/CKA/super.kubeconfig
+
+**Solution:**
+Verify host and port for kube-apiserver are correct.
+
+Open the super.kubeconfig in vi editor.
+
+Change the 9999 port to 6443 and run the below command to verify:
+
+**kubectl cluster-info --kubeconfig=/root/CKA/super.kubeconfig**
+
+**Question 9:**
+We have created a new deployment called nginx-deploy. scale the deployment to 3 replicas. Has the replica's increased? Troubleshoot the issue and fix it.
+
+deployment has 3 replicas
+
+**Solution:**
+Use the command kubectl scale to increase the replica count to 3.
+
+**kubectl scale deploy nginx-deploy --replicas=3**
+The controller-manager is responsible for scaling up pods of a replicaset. If you inspect the control plane components in the kube-system namespace, you will see that the controller-manager is not running.
+
+**kubectl get pods -n kube-system**
+The command running inside the controller-manager pod is incorrect.
+After fix all the values in the file and wait for controller-manager pod to restart.
+
+Alternatively, you can run sed command to change all values at once:
+
+**sed -i 's/kube-contro1ler-manager/kube-controller-manager/g' /etc/kubernetes/manifests/kube-controller-manager.yaml**
+This will fix the issues in controller-manager yaml file.
+
+At last, inspect the deployment by using below command:
+
+**kubectl get deploy**
+
+---
+Lighting Lab
+--------------
+
+**Question 1:**
+Upgrade the current version of kubernetes from 1.26.0 to 1.27.0 exactly using the kubeadm utility. Make sure that the upgrade is carried out one node at a time starting with the controlplane node. To minimize downtime, the deployment gold-nginx should be rescheduled on an alternate node before upgrading each node.
+
+Upgrade controlplane node first and drain node node01 before upgrading it. Pods for gold-nginx should run on the controlplane node subsequently.
+Cluster Upgraded?
+pods 'gold-nginx' running on controlplane?
+
+**Solution:**
+Here is the solution for this task. Please note that the output of these commands have not been added here.
+
+On the controlplane node:
+
+**root@controlplane:~# kubectl drain controlplane --ignore-daemonsets
+root@controlplane:~# apt update
+root@controlplane:~# apt-get install kubeadm=1.27.0-00
+root@controlplane:~# kubeadm upgrade plan v1.27.0
+root@controlplane:~# kubeadm upgrade apply v1.27.0
+root@controlplane:~# apt-get install kubelet=1.27.0-00
+root@controlplane:~# systemctl daemon-reload
+root@controlplane:~# systemctl restart kubelet
+root@controlplane:~# kubectl uncordon controlplane**
+Before draining node01, we need to remove the taint from the controlplane node.
+
+Identify the taint first.
+**root@controlplane:~# kubectl describe node controlplane | grep -i taint**
+
+Remove the taint with help of "kubectl taint" command.
+**root@controlplane:~# kubectl taint node controlplane node-role.kubernetes.io/control-plane:NoSchedule-**
+
+Verify it, the taint has been removed successfully.
+**root@controlplane:~# kubectl describe node controlplane | grep -i taint**
+
+Now, drain the node01 as follows: -
+
+**root@controlplane:~# kubectl drain node01 --ignore-daemonsets
+SSH to the node01 and perform the below steps as follows: -
+root@node01:~# apt update
+root@node01:~# apt-get install kubeadm=1.27.0-00
+root@node01:~# kubeadm upgrade node
+root@node01:~# apt-get install kubelet=1.27.0-00
+root@node01:~# systemctl daemon-reload
+root@node01:~# systemctl restart kubelet**
+
+To exit from the specific node, type exit or logout on the terminal.
+
+Back on the controlplane node: -
+
+**root@controlplane:~# kubectl uncordon node01
+root@controlplane:~# kubectl get pods -o wide | grep gold (make sure this is**
+
+**Question 2:**
+Print the names of all deployments in the admin2406 namespace in the following format:
+
+DEPLOYMENT CONTAINER_IMAGE READY_REPLICAS NAMESPACE
+<deployment name> <container image used> <ready replica count> <Namespace>
+. The data should be sorted by the increasing order of the deployment name.
+
+Example:
+DEPLOYMENT CONTAINER_IMAGE READY_REPLICAS NAMESPACE
+deploy0 nginx:alpine 1 admin2406
+Write the result to the file /opt/admin2406_data.
+
+**Solution:**
+Run the below command to get the correct output:
+
+**kubectl -n admin2406 get deployment -o custom-columns=DEPLOYMENT:.metadata.name,CONTAINER_IMAGE:.spec.template.spec.containers[].image,READY_REPLICAS:.status.readyReplicas,NAMESPACE:.metadata.namespace --sort-by=.metadata.name > /opt/admin2406_data**
+
+**Question 3:**
+A kubeconfig file called admin.kubeconfig has been created in /root/CKA. There is something wrong with the configuration. Troubleshoot and fix it.
+
+Fix /root/CKA/admin.kubeconfig
+
+**Solution:**
+Make sure the port for the kube-apiserver is correct. So for this change port from 4380 to 6443.
+Run the below command to know the cluster information:
+
+**kubectl cluster-info --kubeconfig /root/CKA/admin.**
+
+**Question 4:**
+Create a new deployment called nginx-deploy, with image nginx:1.16 and 1 replica. Next upgrade the deployment to version 1.17 using rolling update.
+
+Image: nginx:1.16
+Task: Upgrade the version of the deployment to 1:17
+
+**Solution:**
+Make use of the kubectl create command to create the deployment and explore the --record option while upgrading the deployment image.
+
+Run the below command to create a deployment nginx-deploy:
+
+**kubectl create deployment  nginx-deploy --image=nginx:1.16**
+Run the below command to update the new image for nginx-deploy deployment and to record the version:
+
+**kubectl set image deployment/nginx-deploy nginx=nginx:1.17 --record**
+
+**Question 5:**
+A new deployment called alpha-mysql has been deployed in the alpha namespace. However, the pods are not running. Troubleshoot and fix the issue. The deployment should make use of the persistent volume alpha-pv to be mounted at /var/lib/mysql and should use the environment variable MYSQL_ALLOW_EMPTY_PASSWORD=1 to make use of an empty root password.
+
+Important: Do not alter the persistent volume.
+Troubleshoot and fix the issues
+
+**Solution:**
+Use the command kubectl describe and try to fix the issue.
+
+Solution manifest file to create a pvc called mysql-alpha-pvc as follows:
+
+![img_10.png](img_10.png)
+
+**Question 6:**
+Take the backup of ETCD at the location /opt/etcd-backup.db on the controlplane node.
+
+**Solution:**
+
+Take a help of command etcdctl snapshot save --help options.
+
+export ETCDCTL_API=3
+etcdctl snapshot save --cacert=/etc/kubernetes/pk
+
+**Question 7:**
+Create a pod called secret-1401 in the admin1401 namespace using the busybox image. The container within the pod should be called secret-admin and should sleep for 4800 seconds.
+The container should mount a read-only secret volume called secret-volume at the path /etc/secret-volume. The secret being mounted has already been created for you and is called dotfile-secret.
+
+**Solution:**
+Use the command kubectl run to create a pod definition file. Add secret volume and update container name in it.
+
+Alternatively, run the following command:
+
+**kubectl run secret-1401 -n admin1401 --image=busybox --dry-run=client -oyaml --command -- sleep 4800 > admin.yaml**
+
+Add the secret volume and mount path to create a pod called secret-1401 in the admin1401 namespace as follows:
+
+![img_11.png](img_11.png)
