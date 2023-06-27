@@ -580,9 +580,9 @@ Troubleshoot and fix the issues
 **Solution:**
 Use the command kubectl describe and try to fix the issue.
 
-Solution manifest file to create a pvc called mysql-alpha-pvc as follows:
+Solution manifest file to create a pvc called mysql-alpha-pvc as follows: <br>
 
-![img_10.png](img_10.png)
+![img_10.png](img_10.png) <br>
 
 **Question 6:**
 Take the backup of ETCD at the location /opt/etcd-backup.db on the controlplane node.
@@ -605,17 +605,17 @@ Alternatively, run the following command:
 
 **kubectl run secret-1401 -n admin1401 --image=busybox --dry-run=client -oyaml --command -- sleep 4800 > admin.yaml**
 
-Add the secret volume and mount path to create a pod called secret-1401 in the admin1401 namespace as follows:
+Add the secret volume and mount path to create a pod called secret-1401 in the admin1401 namespace as follows: <br>
 
-![img_11.png](img_11.png)
-
+![img_11.png](img_11.png) <br>
+ 
 ---
 Control plane failures
 --------------
 **Question 1:**
 The cluster is broken. We tried deploying an application but it's not working. Troubleshoot and fix the issue
 
-**Solution:**
+**Solution:** <br>
 ![img_12.png](img_12.png)
 
 **Question 2:**
@@ -692,4 +692,47 @@ The cluster is broken again. Investigate and fix the issue.
 **Solution:** <br>
 ![img_20.png](img_20.png) <br>
 ![img_21.png](img_21.png) <br>
+
+---
+Troubleshooting network failures
+--------------
+
+The kube-proxy pod is not running. As a result the rules needed to allow connectivity to the services have not been created.
+
+Check the logs of the kube-proxy pod as follows: -
+
+**kube-proxy pod**
+kubectl -n kube-system logs <name_of_the_kube_proxy_pod>
+
+
+The configuration file /var/lib/kube-proxy/configuration.conf is not valid. The configuration path does not match the data in the ConfigMap.
+
+kubectl -n kube-system describe configmap kube-proxy shows that the file name used is config.conf which is mounted in the kube-proxy daemonset pod at the path /var/lib/kube-proxy/config.conf.
+
+
+However in the DaemonSet, for kube-proxy, the command used to start the kube-proxy pod makes use of the path /var/lib/kube-proxy/configuration.conf.
+
+Correct this path to /var/lib/kube-proxy/config.conf as per the ConfigMap and recreate the kube-proxy pod.
+
+Here is the snippet of the correct command to be run by the kube-proxy pod:
+
+spec:
+containers:
+- command:
+- /usr/local/bin/kube-proxy
+- --config=/var/lib/kube-proxy/config.conf
+- --hostname-override=$(NODE_NAME)
+
+
+This should get the kube-proxy pod back in a running state.
+
+
+Run the following command to check the kube-proxy pod status as follows: -
+
+
+kubectl get pods -n kube-system | grep kube-proxy
+kube-proxy-k845b                       1/1     Running   0          90s
+
+
+Note: - In your lab, the kube-proxy pod name could be different.
 
