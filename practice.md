@@ -689,7 +689,7 @@ The cluster is broken again. Investigate and fix the issue.
 **Question 3:**
 The cluster is broken again. Investigate and fix the issue.
 
-**Solution:**
-![img_20.png](img_20.png)
-![img_21.png](img_21.png)
+**Solution:** <br>
+![img_20.png](img_20.png) <br>
+![img_21.png](img_21.png) <br>
 
