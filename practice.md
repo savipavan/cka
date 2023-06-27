@@ -672,18 +672,18 @@ Test worker nodes failure
 **Question 1:**
 Fix the broken cluster
 
-Solution 1:
-![img_13.png](img_13.png)
-![img_14.png](img_14.png)
-![img_15.png](img_15.png)
-![img_16.png](img_16.png)
-![img_17.png](img_17.png)
-![img_18.png](img_18.png)
+Solution 1: <br>
+![img_13.png](img_13.png) <br>
+![img_14.png](img_14.png) <br>
+![img_15.png](img_15.png) <br>
+![img_16.png](img_16.png) <br>
+![img_17.png](img_17.png) <br>
+![img_18.png](img_18.png) <br>
 
 **Question 2:**
 The cluster is broken again. Investigate and fix the issue.
 
-**Solution:**
+**Solution:** <br>
 ![img_19.png](img_19.png)
 
 **Question 3:**
