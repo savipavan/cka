@@ -133,7 +133,6 @@ Host path: /pv/data-analytics
 
 Solution manifest file to create a persistent volume pv-analytics as follows:
 
----
 apiVersion: v1
 kind: PersistentVolume
 metadata:
